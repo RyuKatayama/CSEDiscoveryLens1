@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSE発見レンズの体系化</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700;900&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a365d;
+            --secondary: #2c5282;
+            --accent: #ed8936;
+            --accent2: #48bb78;
+            --accent3: #9f7aea;
+            --accent4: #f56565;
+            --bg-light: #f7fafc;
+            --text-dark: #1a202c;
+            --text-light: #718096;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .presentation-container {
+            width: 100%;
+            max-width: 1400px;
+            aspect-ratio: 16 / 9;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+            padding: 40px 60px 30px 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Title Slide */
+        .slide.title-slide {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .slide.title-slide::before {
+            display: none;
+        }
+
+        .title-slide h1 {
+            font-size: 3.2rem;
+            font-weight: 900;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .title-slide h2 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 50px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            border-top: 2px solid rgba(255,255,255,0.3);
+            padding-top: 30px;
+            margin-top: 20px;
+        }
+
+        /* Content Slides */
+        .slide-header {
+            margin-bottom: 20px;
+            flex-shrink: 0;
+        }
+
+        .slide-header h2 {
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: 700;
+            padding-bottom: 15px;
+            border-bottom: 4px solid var(--accent);
+            display: inline-block;
+        }
+
+        .slide-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Diagram Box */
+        .diagram-box {
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+            border: 3px solid var(--secondary);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .diagram-box.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .diagram-box-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .diagram-box.primary .diagram-box-title {
+            color: white;
+        }
+
+        /* Three Layer Architecture */
+        .layer-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .layer {
+            display: flex;
+            align-items: stretch;
+            gap: 20px;
+        }
+
+        .layer-label {
+            width: 180px;
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .layer-content {
+            flex: 1;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .layer-content h4 {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+
+        .layer-content p {
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        /* Table Styles */
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .styled-table thead {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .styled-table th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .styled-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        .styled-table tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .styled-table tbody tr:hover {
+            background: #edf2f7;
+        }
+
+        /* Matrix Table */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border: 2px solid var(--secondary);
+            padding: 10px 8px;
+            text-align: center;
+        }
+
+        .matrix-table thead th {
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+        }
+
+        .matrix-table tbody th {
+            background: var(--secondary);
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        .matrix-table tbody td {
+            background: white;
+            font-size: 0.85rem;
+        }
+
+        /* Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: white;
+            border: 3px solid var(--secondary);
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .flow-box.highlight {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        /* Grid Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .three-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .four-column {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .card.accent1 { border-left: 5px solid var(--accent); }
+        .card.accent2 { border-left: 5px solid var(--accent2); }
+        .card.accent3 { border-left: 5px solid var(--accent3); }
+        .card.accent4 { border-left: 5px solid var(--accent4); }
+
+        .card h4 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .card p, .card li {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .card ul {
+            padding-left: 20px;
+        }
+
+        /* Process Steps */
+        .process-steps {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+        }
+
+        .process-step {
+            flex: 1;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .process-step::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .process-step:last-child::after {
+            display: none;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .process-step h4 {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        /* Bullet Lists */
+        .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bullet-list li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .bullet-list li::before {
+            content: '●';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 0.8rem;
+        }
+
+        /* Navigation */
+        .nav-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-top: auto;
+            padding-top: 15px;
+            flex-shrink: 0;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .page-indicator {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        /* Highlight Text */
+        .highlight-text {
+            background: linear-gradient(120deg, #fef3c7 0%, #fde68a 100%);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .text-accent { color: var(--accent); font-weight: 700; }
+        .text-accent2 { color: var(--accent2); font-weight: 700; }
+        .text-accent3 { color: var(--accent3); font-weight: 700; }
+        .text-primary { color: var(--primary); font-weight: 700; }
+
+        /* Icon Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-primary { background: var(--primary); color: white; }
+        .badge-accent { background: var(--accent); color: white; }
+        .badge-accent2 { background: var(--accent2); color: white; }
+
+        /* Vertical Flow */
+        .vertical-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .vertical-flow .flow-box {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .vertical-arrow {
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+
+        /* Small text */
+        .small-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        /* Section divider */
+        .section-divider {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), var(--accent2));
+            border-radius: 2px;
+            margin: 15px 0;
+        }
+
+        /* Compact list */
+        .compact-list {
+            font-size: 0.95rem;
+        }
+
+        .compact-list li {
+            padding: 4px 0 4px 25px;
+        }
+
+        /* Quadrant display */
+        .quadrant-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            padding: 10px;
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+
+        .quadrant-cell {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .quadrant-cell h5 {
+            font-size: 1rem;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+
+        .quadrant-cell p {
+            font-size: 0.85rem;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Title -->
+        <div class="slide title-slide active" data-slide="1">
+            <h1>CSE発見レンズの体系化</h1>
+            <h2>既存理論のCSE-M⁶⁵統合</h2>
+            <div class="subtitle">
+                慶応SDMイノベーティブ思考法 × クリステンセンJOB理論 × TRIZ発明原理<br>
+                Creative Systems Engineering への適用・応用・新しい使い方
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()" disabled>← 前へ</button>
+                <span class="page-indicator">1 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: 3-Layer Architecture -->
+        <div class="slide" data-slide="2">
+            <div class="slide-header">
+                <h2>発見レンズの3層アーキテクチャ</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box primary">
+                    <div class="diagram-box-title" style="font-size:1.4rem; margin-bottom:20px;">
+                        CSE 発見レンズ・アーキテクチャ
+                    </div>
+                    <div class="layer-stack">
+                        <div class="layer">
+                            <div class="layer-label" style="background:#ed8936;">第1層<br>存在論的レンズ</div>
+                            <div class="layer-content">
+                                <h4>M⁶⁵ 象限変換</h4>
+                                <p>「<strong>どの視点から見るか</strong>」を規定 ─ I ↔ It ↔ We ↔ Its ↔ ST</p>
+                            </div>
+                        </div>
+                        <div class="layer">
+                            <div class="layer-label" style="background:#48bb78;">第2層<br>認識論的レンズ</div>
+                            <div class="layer-content">
+                                <h4>イノベーティブ思考法</h4>
+                                <p>「<strong>どのように問いを立てるか</strong>」を規定 ─ 発散・収束・統合の思考プロセス</p>
+                            </div>
+                        </div>
+                        <div class="layer">
+                            <div class="layer-label" style="background:#9f7aea;">第3層<br>発見的レンズ</div>
+                            <div class="layer-content">
+                                <h4>JOB理論 ・ TRIZ</h4>
+                                <p>「<strong>何を発見するか</strong>」の具体的手がかり<br>
+                                JOB理論：ステークホルダーの潜在的関心事 ／ TRIZ：システムの進化方向と矛盾解消</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">2 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 3: Innovative Thinking Method -->
+        <div class="slide" data-slide="3">
+            <div class="slide-header">
+                <h2>慶応SDMイノベーティブ思考法のCSE適用</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="card accent1">
+                        <h4>原理の再解釈</h4>
+                        <table class="styled-table" style="font-size:0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>イノベーティブ思考法</th>
+                                    <th>CSE発見レンズとしての再解釈</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>システム思考</td>
+                                    <td>System境界の動的再定義</td>
+                                </tr>
+                                <tr>
+                                    <td>デザイン思考</td>
+                                    <td>Stakeholder共感による関心事発見</td>
+                                </tr>
+                                <tr>
+                                    <td>発散思考</td>
+                                    <td>ステークホルダー・関心事空間の拡張</td>
+                                </tr>
+                                <tr>
+                                    <td>収束思考</td>
+                                    <td>本質的Concernの抽出</td>
+                                </tr>
+                                <tr>
+                                    <td>統合思考</td>
+                                    <td>複数象限の関心事統合</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card accent2">
+                        <h4>5つの視点 × M⁶⁵象限</h4>
+                        <table class="styled-table" style="font-size:0.9rem;">
+                            <thead>
+                                <tr>
+                                    <th>視点</th>
+                                    <th>象限との対応</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>🦅 鳥の目（俯瞰）</td>
+                                    <td>Its象限の拡張</td>
+                                </tr>
+                                <tr>
+                                    <td>🐛 虫の目（詳細）</td>
+                                    <td>It象限の深掘り</td>
+                                </tr>
+                                <tr>
+                                    <td>🐟 魚の目（流れ）</td>
+                                    <td>ST次元の考慮</td>
+                                </tr>
+                                <tr>
+                                    <td>🦇 コウモリの目（逆転）</td>
+                                    <td>象限反転変換</td>
+                                </tr>
+                                <tr>
+                                    <td>❤️ 心の目（共感）</td>
+                                    <td>I/We象限への変換</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">3 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 4: Innovative Thinking Process -->
+        <div class="slide" data-slide="4">
+            <div class="slide-header">
+                <h2>CSE-イノベーティブ思考法の統合プロセス</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="diagram-box">
+                        <div class="diagram-box-title">Phase 1: 発散的ステークホルダー探索</div>
+                        <div class="vertical-flow">
+                            <div class="flow-box" style="background:var(--primary);color:white;">
+                                初期 System
+                            </div>
+                            <div class="vertical-arrow">↓</div>
+                            <div class="flow-box" style="background:#fef3c7;">
+                                イノベーティブ思考法「5つの視点」適用
+                            </div>
+                            <div class="vertical-arrow">↓</div>
+                            <div class="flow-box highlight">
+                                多様なステークホルダー群の発見
+                            </div>
+                        </div>
+                    </div>
+                    <div class="diagram-box">
+                        <div class="diagram-box-title">Phase 2: 収束的関心事抽出</div>
+                        <div class="vertical-flow">
+                            <div class="flow-box" style="background:var(--accent2);color:white;">
+                                各象限のステークホルダー
+                            </div>
+                            <div class="vertical-arrow">↓</div>
+                            <div class="flow-box" style="background:#fef3c7;">
+                                「本質的関心事は何か」を問う
+                            </div>
+                            <div class="vertical-arrow">↓</div>
+                            <div class="flow-box" style="background:#e9d8fd;">
+                                忘却（抽象化）→ 自由構成（具体化）
+                            </div>
+                            <div class="vertical-arrow">↓</div>
+                            <div class="flow-box highlight">
+                                本質的Concernの抽出
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:15px;">
+                    <h4>新しい使い方：象限横断的発散-収束サイクル</h4>
+                    <p style="font-size:1.1rem;">各象限（I・It・We・Its）で独立して発散→収束を行い、最後に<span class="text-accent">統合</span>することで、<br>従来見落としていた関心事を体系的に発見できる</p>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">4 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 5: JOB Theory -->
+        <div class="slide" data-slide="5">
+            <div class="slide-header">
+                <h2>クリステンセンJOB理論のCSE適用</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="diagram-box">
+                        <div class="diagram-box-title">JOB理論の基本構造</div>
+                        <div class="vertical-flow">
+                            <div class="flow-box" style="background:var(--primary);color:white;font-size:1.1rem;">
+                                顧客が「雇う」仕事<br>(Job to be Done)
+                            </div>
+                            <div style="display:flex;gap:15px;margin-top:15px;">
+                                <div class="flow-box" style="border-color:var(--accent);flex:1;">
+                                    <strong style="color:var(--accent);">機能的ジョブ</strong><br>
+                                    <span style="font-size:0.9rem;">何を達成したいか</span>
+                                </div>
+                                <div class="flow-box" style="border-color:var(--accent2);flex:1;">
+                                    <strong style="color:var(--accent2);">感情的ジョブ</strong><br>
+                                    <span style="font-size:0.9rem;">どう感じたいか</span>
+                                </div>
+                                <div class="flow-box" style="border-color:var(--accent3);flex:1;">
+                                    <strong style="color:var(--accent3);">社会的ジョブ</strong><br>
+                                    <span style="font-size:0.9rem;">どう見られたいか</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card accent3">
+                        <h4>JOB理論 × M⁶⁵象限の対応</h4>
+                        <table class="styled-table" style="font-size:0.95rem;">
+                            <thead>
+                                <tr>
+                                    <th>JOBの種類</th>
+                                    <th>M⁶⁵象限</th>
+                                    <th>Concernカテゴリ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>機能的ジョブ</td>
+                                    <td>It / Its</td>
+                                    <td>行動・システム関連</td>
+                                </tr>
+                                <tr>
+                                    <td>感情的ジョブ</td>
+                                    <td>I</td>
+                                    <td>内面・主観的</td>
+                                </tr>
+                                <tr>
+                                    <td>社会的ジョブ</td>
+                                    <td>We</td>
+                                    <td>関係性・文化的</td>
+                                </tr>
+                                <tr style="background:#fef3c7;">
+                                    <td><strong>進化的ジョブ</strong><br><span class="badge badge-accent">新提案</span></td>
+                                    <td>ST</td>
+                                    <td>発達・時間的</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">5 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 6: Extended JOB Matrix -->
+        <div class="slide" data-slide="6">
+            <div class="slide-header">
+                <h2>拡張JOBマトリクス（5象限 × 4JOB = 20セル）</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box">
+                    <div class="diagram-box-title">
+                        <span class="badge badge-accent">新提案</span>
+                        CSE-JOB理論統合：Concern探索マトリクス
+                    </div>
+                    <table class="matrix-table">
+                        <thead>
+                            <tr>
+                                <th style="width:15%;"></th>
+                                <th style="width:21%;">機能的 Job</th>
+                                <th style="width:21%;">感情的 Job</th>
+                                <th style="width:21%;">社会的 Job</th>
+                                <th style="width:21%;">進化的 Job</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>I象限<br>(個人内面)</th>
+                                <td>自己管理</td>
+                                <td>充実感</td>
+                                <td>自己呈示</td>
+                                <td>成長実感</td>
+                            </tr>
+                            <tr>
+                                <th>It象限<br>(個人外面)</th>
+                                <td>タスク遂行</td>
+                                <td>快適さ</td>
+                                <td>役割遂行</td>
+                                <td>スキル発達</td>
+                            </tr>
+                            <tr>
+                                <th>We象限<br>(集合内面)</th>
+                                <td>協働達成</td>
+                                <td>帰属感</td>
+                                <td>承認</td>
+                                <td>文化継承</td>
+                            </tr>
+                            <tr>
+                                <th>Its象限<br>(集合外面)</th>
+                                <td>システム効率</td>
+                                <td>安心感</td>
+                                <td>社会的信頼</td>
+                                <td>持続可能性</td>
+                            </tr>
+                            <tr>
+                                <th>ST次元<br>(時空間)</th>
+                                <td>長期目標達成</td>
+                                <td>希望</td>
+                                <td>世代間連帯</td>
+                                <td>進化適応</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p style="font-size:1.1rem;text-align:center;margin-top:15px;">
+                    このマトリクスを用いることで、<span class="highlight-text">ステークホルダーごとに20の観点から体系的にConcernを探索</span>できる
+                </p>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">6 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 7: JOB Chain Analysis -->
+        <div class="slide" data-slide="7">
+            <div class="slide-header">
+                <h2>新しい使い方：JOBチェーン分析</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="card accent1">
+                        <h4>従来のJOB理論</h4>
+                        <div class="flow-diagram" style="margin:20px 0;">
+                            <div class="flow-box">ステークホルダー</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">単一のJTBD</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">解決策</div>
+                        </div>
+                    </div>
+                    <div class="card accent2">
+                        <h4>CSE拡張JOB理論</h4>
+                        <div class="flow-diagram" style="margin:20px 0;">
+                            <div class="flow-box">ステークホルダー</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box highlight">象限別JOBの連鎖</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box" style="background:var(--accent2);color:white;">システム群</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="diagram-box" style="margin-top:20px;">
+                    <div class="diagram-box-title">例：移民労働者のJOBチェーン</div>
+                    <div class="flow-diagram" style="flex-wrap:nowrap;">
+                        <div class="flow-box" style="min-width:200px;">
+                            <span class="badge badge-primary">It-機能的</span><br>
+                            「安定した収入を得たい」
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box" style="min-width:200px;">
+                            <span class="badge" style="background:var(--accent2);color:white;">I-感情的</span><br>
+                            「安心感を得たい」
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box" style="min-width:200px;">
+                            <span class="badge" style="background:var(--accent3);color:white;">We-社会的</span><br>
+                            「コミュニティに受け入れられたい」
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box" style="min-width:200px;">
+                            <span class="badge" style="background:var(--accent);color:white;">ST-進化的</span><br>
+                            「子どもに良い未来を残したい」
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size:1.15rem;text-align:center;margin-top:20px;">
+                    JOBチェーンを追うことで、単一システムではなく<span class="highlight-text">Systems of Systems の発見</span>につながる
+                </p>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">7 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 8: TRIZ Overview -->
+        <div class="slide" data-slide="8">
+            <div class="slide-header">
+                <h2>TRIZのCSE適用</h2>
+            </div>
+            <div class="slide-content">
+                <div class="card" style="margin-bottom:20px;">
+                    <h4>TRIZ基本構造のCSE再解釈</h4>
+                    <table class="styled-table">
+                        <thead>
+                            <tr>
+                                <th style="width:35%;">TRIZ要素</th>
+                                <th style="width:65%;">CSE発見レンズとしての再解釈</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>40の発明原理</strong></td>
+                                <td>40のシステム変換パターン</td>
+                            </tr>
+                            <tr>
+                                <td><strong>矛盾マトリクス</strong></td>
+                                <td>Concern間矛盾の解消指針</td>
+                            </tr>
+                            <tr>
+                                <td><strong>技術システム進化法則</strong></td>
+                                <td>社会システム進化法則への拡張</td>
+                            </tr>
+                            <tr>
+                                <td><strong>理想最終結果（IFR）</strong></td>
+                                <td>理想的System状態の定義</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="three-column">
+                    <div class="card accent1">
+                        <h4>技術領域</h4>
+                        <p>物理的矛盾の解消<br>製品・プロセスの改善</p>
+                    </div>
+                    <div class="card accent2" style="border-left-color:var(--accent);">
+                        <h4 style="display:flex;align-items:center;gap:10px;">CSE領域 <span class="badge badge-accent">拡張</span></h4>
+                        <p>Concern間矛盾の解消<br>システム発見・創造</p>
+                    </div>
+                    <div class="card accent3">
+                        <h4>適用範囲</h4>
+                        <p>社会システム<br>組織・制度・政策</p>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">8 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 9: TRIZ Principles -->
+        <div class="slide" data-slide="9">
+            <div class="slide-header">
+                <h2>TRIZの40原理 → CSE発見レンズへの変換</h2>
+            </div>
+            <div class="slide-content">
+                <table class="styled-table" style="font-size:0.95rem;">
+                    <thead>
+                        <tr>
+                            <th style="width:8%;">No.</th>
+                            <th style="width:15%;">TRIZ原理</th>
+                            <th style="width:30%;">技術的解釈</th>
+                            <th style="width:47%;">CSE発見レンズとしての解釈</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>1</strong></td>
+                            <td>分割</td>
+                            <td>部品を分ける</td>
+                            <td><span class="text-accent">ステークホルダーのセグメント化</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>2</strong></td>
+                            <td>抽出</td>
+                            <td>必要部分だけ取り出す</td>
+                            <td><span class="text-accent">本質的Concernの抽出（忘却）</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>13</strong></td>
+                            <td>逆発想</td>
+                            <td>逆の作用を行う</td>
+                            <td><span class="text-accent">象限反転による新Concern発見</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>17</strong></td>
+                            <td>他次元移行</td>
+                            <td>2D→3D</td>
+                            <td><span class="text-accent">象限間移動による視点転換</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>22</strong></td>
+                            <td>災い転じて福</td>
+                            <td>有害要素の活用</td>
+                            <td><span class="text-accent">ネガティブConcernの資源化</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>25</strong></td>
+                            <td>セルフサービス</td>
+                            <td>自己機能化</td>
+                            <td><span class="text-accent">ステークホルダーの自律化</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>35</strong></td>
+                            <td>パラメータ変更</td>
+                            <td>物性変化</td>
+                            <td><span class="text-accent">Concern属性の変換</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>40</strong></td>
+                            <td>複合材料</td>
+                            <td>材料の組合せ</td>
+                            <td><span class="text-accent">複数象限Concernの統合</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">9 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 10: CSE Contradiction Matrix -->
+        <div class="slide" data-slide="10">
+            <div class="slide-header">
+                <h2>CSE矛盾マトリクス</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column" style="margin-bottom:20px;">
+                    <div class="card accent1">
+                        <h4>従来のTRIZ矛盾マトリクス</h4>
+                        <p style="font-size:1.1rem;text-align:center;padding:15px;background:#f0f4f8;border-radius:8px;">
+                            改善したい特性 × 悪化する特性<br>
+                            ↓<br>
+                            <strong>推奨発明原理</strong>
+                        </p>
+                    </div>
+                    <div class="card accent2">
+                        <h4><span class="badge badge-accent">新提案</span> CSE矛盾マトリクス</h4>
+                        <p style="font-size:1.1rem;text-align:center;padding:15px;background:#f0f4f8;border-radius:8px;">
+                            充足したいConcern × 矛盾するConcern<br>
+                            ↓<br>
+                            <strong>推奨発見レンズ</strong>
+                        </p>
+                    </div>
+                </div>
+                <div class="diagram-box">
+                    <div class="diagram-box-title">例：生成AI学習システム</div>
+                    <table class="styled-table" style="font-size:0.95rem;">
+                        <thead>
+                            <tr>
+                                <th style="width:28%;">充足したいConcern</th>
+                                <th style="width:28%;">矛盾するConcern</th>
+                                <th style="width:44%;">推奨発見レンズ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>学習効率（Its）</td>
+                                <td>人間らしさ（I）</td>
+                                <td>原理13：逆発想、原理17：次元移行</td>
+                            </tr>
+                            <tr>
+                                <td>個別最適化（It）</td>
+                                <td>協調学習（We）</td>
+                                <td>原理1：分割、原理5：併合</td>
+                            </tr>
+                            <tr>
+                                <td>即時性（ST-現在）</td>
+                                <td>深い理解（ST-未来）</td>
+                                <td>原理15：ダイナミック化</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">10 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 11: CSE Evolution Laws -->
+        <div class="slide" data-slide="11">
+            <div class="slide-header">
+                <h2>技術システム進化法則のCSE拡張</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box">
+                    <div class="diagram-box-title">
+                        <span class="badge badge-accent">新提案</span>
+                        TRIZの8つの進化法則 → CSEシステム進化法則
+                    </div>
+                    <table class="styled-table" style="font-size:1rem;">
+                        <thead>
+                            <tr>
+                                <th style="width:45%;">TRIZ進化法則</th>
+                                <th style="width:55%;">CSEシステム進化法則</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>完全性の法則</td>
+                                <td><strong>Concern網羅性の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>エネルギー伝達の法則</td>
+                                <td><strong>価値伝達の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>リズム調整の法則</td>
+                                <td><strong>ステークホルダー調和の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>理想性増大の法則</td>
+                                <td><strong>Concern充足度増大の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>構成要素の不均等発展</td>
+                                <td><strong>象限間発展不均衡の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>上位システムへの移行</td>
+                                <td><strong>メタシステム化の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>ミクロレベルへの移行</td>
+                                <td><strong>個人レベルへの深化の法則</strong></td>
+                            </tr>
+                            <tr>
+                                <td>ダイナミック化</td>
+                                <td><strong>適応的システム化の法則</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">11 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 12: Integrated Framework -->
+        <div class="slide" data-slide="12">
+            <div class="slide-header">
+                <h2>統合フレームワーク：CSE発見レンズ・ツールキット</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box primary" style="padding:30px;">
+                    <div class="diagram-box-title" style="font-size:1.3rem;margin-bottom:25px;">
+                        発見レンズ選択フローチャート
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:15px;">
+                        <div class="flow-box" style="background:white;color:var(--primary);font-size:1.1rem;font-weight:700;">
+                            何を発見したいか？
+                        </div>
+                        <div style="display:flex;gap:40px;margin-top:10px;">
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                                <div style="color:white;font-size:1.5rem;">↓</div>
+                                <div class="flow-box" style="background:var(--accent);border-color:var(--accent);">
+                                    <strong>新しいStakeholder</strong>
+                                </div>
+                                <div style="color:white;">↓</div>
+                                <div class="flow-box" style="background:white;font-size:0.9rem;color:#1a202c;">
+                                    M⁶⁵象限変換<br>＋<br>イノベーティブ思考法<br>「5つの目」
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                                <div style="color:white;font-size:1.5rem;">↓</div>
+                                <div class="flow-box" style="background:var(--accent2);border-color:var(--accent2);">
+                                    <strong>新しいConcern</strong>
+                                </div>
+                                <div style="color:white;">↓</div>
+                                <div class="flow-box" style="background:white;font-size:0.9rem;color:#1a202c;">
+                                    JOB理論<br>＋<br>拡張JOBマトリクス<br>(5象限×4JOB)
+                                </div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                                <div style="color:white;font-size:1.5rem;">↓</div>
+                                <div class="flow-box" style="background:var(--accent3);border-color:var(--accent3);">
+                                    <strong>Concern間矛盾解消</strong>
+                                </div>
+                                <div style="color:white;">↓</div>
+                                <div class="flow-box" style="background:white;font-size:0.9rem;color:#1a202c;">
+                                    TRIZ矛盾マトリクス<br>＋<br>CSE発見原理
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">12 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 13: Combination Patterns -->
+        <div class="slide" data-slide="13">
+            <div class="slide-header">
+                <h2>発見レンズの組合せパターン</h2>
+            </div>
+            <div class="slide-content">
+                <div class="two-column">
+                    <div class="card accent1">
+                        <h4>パターン1：探索型（未知領域の発見）</h4>
+                        <div class="flow-diagram" style="margin:15px 0;font-size:0.9rem;">
+                            <div class="flow-box">M⁶⁵<br>象限変換</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">イノベーティブ<br>思考法（発散）</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box highlight">JOB理論<br>（深掘り）</div>
+                        </div>
+                    </div>
+                    <div class="card accent2">
+                        <h4>パターン2：深化型（既知領域の深掘り）</h4>
+                        <div class="flow-diagram" style="margin:15px 0;font-size:0.9rem;">
+                            <div class="flow-box">JOB理論<br>（起点）</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">JOBチェーン<br>分析</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box highlight">M⁶⁵<br>象限展開</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="two-column" style="margin-top:20px;">
+                    <div class="card accent3">
+                        <h4>パターン3：解決型（矛盾の解消）</h4>
+                        <div class="flow-diagram" style="margin:15px 0;font-size:0.9rem;">
+                            <div class="flow-box">Concern<br>矛盾特定</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">TRIZ<br>発見原理</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box highlight">M⁶⁵<br>象限統合</div>
+                        </div>
+                    </div>
+                    <div class="card accent4">
+                        <h4>パターン4：進化型（発展方向予測）</h4>
+                        <div class="flow-diagram" style="margin:15px 0;font-size:0.9rem;">
+                            <div class="flow-box">現状<br>システム分析</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box">CSE<br>進化法則</div>
+                            <div class="flow-arrow">→</div>
+                            <div class="flow-box highlight">将来Concern<br>予測</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">13 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 14: Case Study - Exploration -->
+        <div class="slide" data-slide="14">
+            <div class="slide-header">
+                <h2>適用事例：日本の移民政策（探索型）</h2>
+            </div>
+            <div class="slide-content">
+                <div class="three-column">
+                    <div class="diagram-box" style="padding:15px;">
+                        <div class="diagram-box-title" style="font-size:1rem;">Step 1：M⁶⁵象限変換</div>
+                        <div class="vertical-flow" style="gap:8px;">
+                            <div class="flow-box" style="padding:10px;font-size:0.9rem;background:var(--primary);color:white;">
+                                初期設定：Its象限（入管制度）
+                            </div>
+                            <div style="font-size:1.2rem;color:var(--secondary);">↓</div>
+                            <div class="flow-box" style="padding:10px;font-size:0.9rem;">
+                                変換：Its → I, It, We, ST
+                            </div>
+                        </div>
+                    </div>
+                    <div class="diagram-box" style="padding:15px;">
+                        <div class="diagram-box-title" style="font-size:1rem;">Step 2：5つの目</div>
+                        <ul class="bullet-list compact-list" style="font-size:0.85rem;">
+                            <li>🦅 鳥：国際社会、送出国政府</li>
+                            <li>🐛 虫：個別の移民家族</li>
+                            <li>🐟 魚：将来の移民予備軍</li>
+                            <li>🦇 逆転：海外移住する日本人</li>
+                            <li>❤️ 心：移民の子ども、高齢移民</li>
+                        </ul>
+                    </div>
+                    <div class="diagram-box" style="padding:15px;">
+                        <div class="diagram-box-title" style="font-size:1rem;">Step 3：JOB分析</div>
+                        <p style="font-size:0.85rem;margin-bottom:10px;">移民の子どもの20セル探索</p>
+                        <div style="font-size:0.8rem;background:#f0f4f8;padding:10px;border-radius:6px;">
+                            I-感情：安心感<br>
+                            We-社会：文化的承認<br>
+                            ST-進化：アイデンティティ形成
+                        </div>
+                    </div>
+                </div>
+                <div class="diagram-box" style="margin-top:20px;">
+                    <div class="diagram-box-title">発見されるシステム候補</div>
+                    <div class="three-column" style="gap:15px;">
+                        <div class="flow-box" style="background:var(--accent);color:white;border-color:var(--accent);">
+                            移民児童の<br>アイデンティティ形成<br>支援システム
+                        </div>
+                        <div class="flow-box" style="background:var(--accent2);color:white;border-color:var(--accent2);">
+                            バイリンガル・<br>バイカルチュラル<br>発達支援システム
+                        </div>
+                        <div class="flow-box" style="background:var(--accent3);color:white;border-color:var(--accent3);">
+                            世代間<br>文化継承<br>プラットフォーム
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">14 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 15: Case Study - Resolution -->
+        <div class="slide" data-slide="15">
+            <div class="slide-header">
+                <h2>適用事例：日本の移民政策（解決型）</h2>
+            </div>
+            <div class="slide-content">
+                <div class="diagram-box" style="margin-bottom:20px;">
+                    <div class="diagram-box-title">Step 1：Concern間矛盾の特定</div>
+                    <div class="three-column">
+                        <div class="card accent1" style="padding:12px;">
+                            <h4 style="font-size:0.95rem;">矛盾1</h4>
+                            <p style="font-size:0.9rem;">労働力確保（Its-機能的）<br>↔<br>文化的同質性維持（We-社会的）</p>
+                        </div>
+                        <div class="card accent2" style="padding:12px;">
+                            <h4 style="font-size:0.95rem;">矛盾2</h4>
+                            <p style="font-size:0.9rem;">経済効率（Its）<br>↔<br>人権保護（I）</p>
+                        </div>
+                        <div class="card accent3" style="padding:12px;">
+                            <h4 style="font-size:0.95rem;">矛盾3</h4>
+                            <p style="font-size:0.9rem;">短期滞在（ST-現在）<br>↔<br>社会統合（ST-未来）</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="diagram-box">
+                    <div class="diagram-box-title">Step 2：TRIZ発見原理の適用と発見されるシステム</div>
+                    <table class="styled-table" style="font-size:0.95rem;">
+                        <thead>
+                            <tr>
+                                <th style="width:20%;">矛盾</th>
+                                <th style="width:30%;">適用原理</th>
+                                <th style="width:50%;">発見されるシステム</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>矛盾1</strong></td>
+                                <td>原理1（分割）＋原理5（併合）</td>
+                                <td><span class="text-accent">多層的統合システム</span>（完全統合でも分離でもない）</td>
+                            </tr>
+                            <tr>
+                                <td><strong>矛盾2</strong></td>
+                                <td>原理13（逆発想）</td>
+                                <td><span class="text-accent2">移民が日本人を支援するシステム</span>（逆方向価値創造）</td>
+                            </tr>
+                            <tr>
+                                <td><strong>矛盾3</strong></td>
+                                <td>原理15（ダイナミック化）</td>
+                                <td><span class="text-accent3">段階的統合パスウェイシステム</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">15 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()">次へ →</button>
+            </div>
+        </div>
+
+        <!-- Slide 16: Conclusion -->
+        <div class="slide" data-slide="16">
+            <div class="slide-header">
+                <h2>論文への統合提案</h2>
+            </div>
+            <div class="slide-content">
+                <div class="card" style="margin-bottom:15px;background:linear-gradient(135deg,#edf2f7,#e2e8f0);">
+                    <h4 style="font-size:1.2rem;">拡張された研究タイトル案</h4>
+                    <p style="font-size:1.15rem;padding:15px;background:white;border-radius:8px;margin-top:10px;">
+                        「圏論的象限変換と創造的方法論の統合による体系的システム発見フレームワーク：<br>
+                        <span class="text-primary">M⁶⁵-CSE-発見レンズ・ツールキット</span>の構築と実証」
+                    </p>
+                </div>
+                <div class="diagram-box">
+                    <div class="diagram-box-title">追加される理論的貢献</div>
+                    <div class="four-column">
+                        <div class="card accent1" style="padding:15px;">
+                            <h4 style="font-size:0.95rem;">貢献1</h4>
+                            <p style="font-size:0.9rem;">既存創造的方法論のCSE再解釈<br>（イノベーティブ思考法、JOB理論、TRIZ）</p>
+                        </div>
+                        <div class="card accent2" style="padding:15px;">
+                            <h4 style="font-size:0.95rem;">貢献2</h4>
+                            <p style="font-size:0.9rem;">発見レンズの<br>3層アーキテクチャ<br>の提案</p>
+                        </div>
+                        <div class="card accent3" style="padding:15px;">
+                            <h4 style="font-size:0.95rem;">貢献3</h4>
+                            <p style="font-size:0.9rem;">拡張JOBマトリクス<br>（5象限×4JOB=20セル）<br>の提案</p>
+                        </div>
+                        <div class="card accent4" style="padding:15px;">
+                            <h4 style="font-size:0.95rem;">貢献4</h4>
+                            <p style="font-size:0.9rem;">CSE矛盾マトリクス<br>とCSE進化法則<br>の提案</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-diagram" style="margin-top:15px;">
+                    <div class="flow-box" style="background:var(--primary);color:white;">
+                        M⁶⁵理論<br>（数学的基盤）
+                    </div>
+                    <div class="flow-arrow">＋</div>
+                    <div class="flow-box" style="background:var(--secondary);color:white;">
+                        CSE<br>（方法論）
+                    </div>
+                    <div class="flow-arrow">＋</div>
+                    <div class="flow-box" style="background:var(--accent);color:white;">
+                        発見レンズ<br>（実践ツール）
+                    </div>
+                    <div class="flow-arrow">=</div>
+                    <div class="flow-box" style="background:linear-gradient(135deg,var(--accent2),var(--accent3));color:white;font-weight:700;">
+                        体系的<br>システム発見<br>フレームワーク
+                    </div>
+                </div>
+            </div>
+            <div class="nav-container">
+                <button class="nav-btn" onclick="prevSlide()">← 前へ</button>
+                <span class="page-indicator">16 / 16</span>
+                <button class="nav-btn" onclick="nextSlide()" disabled>次へ →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 16;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            if (n < 1) currentSlide = 1;
+            else if (n > totalSlides) currentSlide = totalSlides;
+            else currentSlide = n;
+            
+            document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+            updateNavButtons();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function updateNavButtons() {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => {
+                const prevBtn = slide.querySelector('.nav-btn:first-child');
+                const nextBtn = slide.querySelector('.nav-btn:last-child');
+                const indicator = slide.querySelector('.page-indicator');
+                
+                prevBtn.disabled = currentSlide === 1;
+                nextBtn.disabled = currentSlide === totalSlides;
+                indicator.textContent = `${currentSlide} / ${totalSlides}`;
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(1);
+    </script>
+</body>
+</html>
